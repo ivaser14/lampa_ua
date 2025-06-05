@@ -1,5 +1,5 @@
 (function() {
-    window.plugin = {
+    const plugin = {
         name: 'lampa_ua_minimal',
         version: '1.0',
         description: 'Мінімальний плагін для тесту',
