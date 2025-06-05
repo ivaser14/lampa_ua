@@ -1,72 +1,60 @@
-import cheerio from 'cheerio';
-
-async function searchUafix(query) {
-    const url = `https://uafix.net/?s=${encodeURIComponent(query)}`;
-    let results = [];
-
-    try {
-        const response = await fetch(url);
-        const text = await response.text();
-
-        const $ = cheerio.load(text);
-
-        $('.shortstory').each((i, elem) => {
-            const a = $(elem).find('a').first();
-            const title = a.text().trim() || 'Без назви';
-            const link = a.attr('href');
-
-            const img = $(elem).find('img').attr('src') || '';
-
-            const descr = $(elem).find('.shortstory__descr').text().trim() || '';
-
-            if(link) {
-                results.push({
-                    id: link,
-                    title: title,
-                    img: img,
-                    descr: descr,
-                    source: 'uafix.net',
-                    link: link
-                });
-            }
-        });
-
-    } catch(e) {
-        console.warn('Помилка парсингу uafix.net', e);
-    }
-
-    return results;
-}
-
-export default function() {
-    return {
+(function(){
+    window.lampa_plugins = window.lampa_plugins || [];
+    window.lampa_plugins.push({
         name: 'lampa_ua',
+        type: 'video',
         version: '1.0',
-        icon: 'https://uafix.net/favicon.ico',
-        description: 'Українські джерела: uafix.net',
+        description: 'Пошук фільмів на uafix.net',
 
-        search: async function(query) {
-            const results = [];
-            const uafixResults = await searchUafix(query);
-            results.push(...uafixResults);
-            return results;
+        search: async function(query, callback) {
+            const url = `https://uafix.net/?s=${encodeURIComponent(query)}`;
+            try {
+                const res = await fetch(url);
+                const html = await res.text();
+
+                const items = [];
+                const matches = [...html.matchAll(/<div class="shortstory">([\s\S]*?)<\/div>/g)];
+
+                for (const match of matches) {
+                    const block = match[1];
+
+                    const linkMatch = block.match(/href="([^"]+)"/);
+                    const imgMatch = block.match(/<img[^>]+src="([^"]+)"/);
+                    const titleMatch = block.match(/<a[^>]*>([^<]+)<\/a>/);
+                    const descrMatch = block.match(/<div class="shortstory__descr">([\s\S]*?)<\/div>/);
+
+                    const link = linkMatch?.[1] || '';
+                    const img = imgMatch?.[1] || '';
+                    const title = titleMatch?.[1]?.trim() || 'Без назви';
+                    const descr = descrMatch?.[1]?.trim().replace(/<[^>]+>/g, '') || '';
+
+                    if (link) {
+                        items.push({
+                            title,
+                            link,
+                            img,
+                            descr,
+                            source: 'uafix.net'
+                        });
+                    }
+                }
+
+                callback(items);
+            } catch (e) {
+                console.error('UAFIX search error:', e);
+                callback([]);
+            }
         },
 
-        getMovie: async function(id) {
-            // Можна реалізувати детальний опис за посиланням id
-            // Зараз повертаємо заглушку
-            return {
-                title: 'Детальна інформація недоступна',
-                descr: '',
-                img: '',
-                seasons: []
-            };
-        },
-
-        watch: async function(id) {
-            // Для uafix.net треба реалізувати логіку вилучення потоків
-            // Поки що повертаємо порожній масив
-            return [];
+        item: function(item, render) {
+            render({
+                title: item.title,
+                cover: item.img,
+                description: item.descr,
+                onPlay: function() {
+                    Lampa.Player.play(item.link, 'iframe');
+                }
+            });
         }
-    };
-}
+    });
+})();
