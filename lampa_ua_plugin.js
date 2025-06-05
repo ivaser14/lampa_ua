@@ -1,25 +1,34 @@
 (function() {
-    window.lampa.plugin('lampa_ua_minimal', {
-        name: 'Lampa UA Minimal',
+    window.plugin = {
+        name: 'lampa_ua_minimal',
         version: '1.0',
-        description: 'Мінімальний плагін без парсингу — просто тест',
+        description: 'Мінімальний плагін для тесту',
+        icon: 'https://uafix.net/favicon.ico',
 
-        search: function(query, callback) {
-            console.log('Пошук запит:', query);
-            callback([]);
-        },
-
-        get: function(id, callback) {
-            callback({
-                title: 'Тестова стрічка',
-                descr: 'Деталі відсутні',
-                img: '',
-                seasons: []
+        search: function(query) {
+            return new Promise((resolve) => {
+                console.log('Пошук:', query);
+                resolve([]);
             });
         },
 
-        play: function(id, callback) {
-            callback([]);
+        get: function(id) {
+            return new Promise((resolve) => {
+                resolve({
+                    title: 'Тестовий фільм',
+                    descr: 'Опис відсутній',
+                    img: '',
+                    seasons: []
+                });
+            });
+        },
+
+        watch: function(id) {
+            return new Promise((resolve) => {
+                resolve([]);
+            });
         }
-    });
+    };
+
+    window.lampa.register(plugin);
 })();
