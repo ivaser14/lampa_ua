@@ -5,7 +5,6 @@
             .then(res => res.text())
             .then(html => {
                 const results = [];
-
                 const matches = [...html.matchAll(/<div class="shortstory">([\s\S]+?)<\/div>\s*<\/div>/g)];
 
                 for (const match of matches) {
@@ -45,10 +44,13 @@
         type: 'video',
         name: 'UAFix',
         version: '1.0',
+        icon: 'https://uafix.net/favicon.ico',
         description: 'Джерело з uafix.net',
 
         search: function(query, callback) {
-            searchUafix(query).then(callback);
+            searchUafix(query).then(results => {
+                callback(results);
+            });
         },
 
         get: function(id, callback) {
